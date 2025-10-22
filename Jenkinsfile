@@ -1,13 +1,28 @@
 pipeline {
-    agent any
+    agent {
+        docker {
+            image 'abhigyop/jenkins-agent:latest'  // Your custom agent
+            args '-v /var/run/docker.sock:/var/run/docker.sock'
+        }
+    }
 
     environment {
-        DOCKER_REGISTRY = 'abhigyop'        // Your Docker Hub username
+        DOCKER_REGISTRY = 'abhigyop'        // Docker Hub username
         IMAGE_TAG = "${BUILD_NUMBER}"       // Jenkins build number as image tag
         KUBERNETES_SERVER = 'https://kubernetes.default.svc'  
     }
 
     stages {
+        // Stage 0: Test agent
+        stage('Test Agent') {
+            steps {
+                sh 'node -v'
+                sh 'npm -v'
+                sh 'docker --version'
+                sh 'git --version'
+            }
+        }
+
         // Stage 1: Checkout code from GitHub
         stage('Checkout') {
             steps {
@@ -108,7 +123,6 @@ pipeline {
         }
     }
 
-    // Post actions
     post {
         success { echo '🎉 Pipeline completed successfully!' }
         failure { echo '❌ Pipeline failed!' }
